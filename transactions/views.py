@@ -9,6 +9,8 @@ from django.views.generic import CreateView, ListView, FormView
 from transactions.constants import DEPOSIT, WITHDRAWAL,LOAN, LOAN_PAID, SEND_MONEY, RECEIVED_MONEY
 from datetime import datetime
 from django.db.models import Sum
+from django.core.mail import EmailMessage, EmailMultiAlternatives
+from django.template.loader import render_to_string
 from transactions.forms import (
     DepositForm,
     WithdrawForm,
@@ -18,6 +20,14 @@ from transactions.forms import (
 from accounts.models import UserBankAccount
 from transactions.models import Transaction
 
+def send_transaction_email(user, amount, subject, template):
+        message = render_to_string(template, {
+            'user' : user,
+            'amount' : amount,
+        })
+        send_email = EmailMultiAlternatives(subject, '', to=[user.email])
+        send_email.attach_alternative(message, "text/html")
+        send_email.send()
 
 class TransactionCreateMixin(LoginRequiredMixin, CreateView):
     template_name = 'transactions/transaction_form.html'
@@ -66,6 +76,7 @@ class DepositMoneyView(TransactionCreateMixin):
             self.request,
             f'{"{:,.2f}".format(float(amount))}$ was deposited to your account successfully'
         )
+        send_transaction_email(self.request.user, amount, "Deposite Message", "transactions/deposite_email.html")
 
         return super().form_valid(form)
 
@@ -90,6 +101,7 @@ class WithdrawMoneyView(TransactionCreateMixin):
             self.request,
             f'Successfully withdrawn {"{:,.2f}".format(float(amount))}$ from your account'
         )
+        send_transaction_email(self.request.user, amount, "Withdrawal Message", "transactions/withdrawal_email.html")
 
         return super().form_valid(form)
 
@@ -111,6 +123,7 @@ class LoanRequestView(TransactionCreateMixin):
             self.request,
             f'Loan request for {"{:,.2f}".format(float(amount))}$ submitted successfully'
         )
+        send_transaction_email(self.request.user, amount, "Loan Request Message", "transactions/loan_email.html")
 
         return super().form_valid(form)
     
@@ -226,14 +239,14 @@ class TransferMoneyView(FormView):
                         loan_approved = False,
                     )
                     # send user a email for send money
-                    #send_transaction_email('transactions/email_template.html', 'send money', self.request.user, amount, 'Send Money')
+                    send_transaction_email('transactions/email_template.html', 'send money', self.request.user, amount, 'Send Money')
                     
 
                     receiver_account.balance += amount
                     receiver_account.save()
 
                     # send user a email for receive money
-                    #send_transaction_email('transactions/email_template.html', 'receive money', receiver_account.user, amount, 'Received Money')
+                    send_transaction_email('transactions/email_template.html', 'receive money', receiver_account.user, amount, 'Received Money')
 
                     Transaction.objects.create(
                         account = receiver_account,
