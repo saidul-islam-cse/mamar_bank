@@ -239,14 +239,14 @@ class TransferMoneyView(FormView):
                         loan_approved = False,
                     )
                     # send user a email for send money
-                    send_transaction_email('transactions/email_template.html', 'send money', self.request.user, amount, 'Send Money')
+                    send_transaction_email(self.request.user, amount, 'Send Money', 'transactions/send_email_template.html')
                     
 
                     receiver_account.balance += amount
                     receiver_account.save()
 
                     # send user a email for receive money
-                    send_transaction_email('transactions/email_template.html', 'receive money', receiver_account.user, amount, 'Received Money')
+                    send_transaction_email(receiver_account.user, amount,'Received Money''transactions/receive_email_template.html')
 
                     Transaction.objects.create(
                         account = receiver_account,
