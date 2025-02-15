@@ -10,7 +10,8 @@
         <h1 class="font-bold text-3xl text-center pb-5 shadow-md">Login</h1>
         <div class="w-full mt-10">
             <form method="post" class="shadow-md border border-gray-200 rounded px-8 pt-6 pb-8 mb-4">
-                {% csrf_token %} {% for hidden_field in form.hidden_fields %} {{ hidden_field.errors }} {{ hidden_field }} {% endfor %} 
+                {% csrf_token %} 
+                {% for hidden_field in form.hidden_fields %} {{ hidden_field.errors }} {{ hidden_field }} {% endfor %} 
                 {% for field in form.visible_fields %}
                 <div class="mb-4">
                     <label class="block text-gray-700 text-sm font-bold mb-2" for="{{ field.id_for_label }}">
